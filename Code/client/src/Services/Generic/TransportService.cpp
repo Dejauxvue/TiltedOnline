@@ -1,56 +1,55 @@
 #include <Services/TransportService.h>
 
-#include <Events/UpdateEvent.h>
+#include <Events/CellChangeEvent.h>
 #include <Events/ConnectedEvent.h>
 #include <Events/DisconnectedEvent.h>
-#include <Events/CellChangeEvent.h>
+#include <Events/UpdateEvent.h>
 
-#include <Games/TES.h>
 #include <Games/References.h>
+#include <Games/TES.h>
 
 #include <Forms/TESNPC.h>
 
 #include <World.h>
 
-#include <Packet.hpp>
 #include <Messages/AuthenticationRequest.h>
+#include <Packet.hpp>
 #include <ScratchAllocator.hpp>
 
-#include <Services/ImguiService.h>
 #include <Services/DiscordService.h>
+#include <Services/ImguiService.h>
 
 #include <imgui.h>
 #include <imgui_internal.h>
 
-#include <Messages/AuthenticationResponse.h>
-#include <Messages/ServerMessageFactory.h>
 #include <Messages/AssignCharacterResponse.h>
-#include <Messages/ServerReferencesMoveRequest.h>
-#include <Messages/EnterCellRequest.h>
+#include <Messages/AuthenticationResponse.h>
 #include <Messages/CharacterSpawnRequest.h>
-#include <Messages/NotifyInventoryChanges.h>
+#include <Messages/EnterCellRequest.h>
+#include <Messages/NotifyCharacterTravel.h>
+#include <Messages/NotifyContainerChange.h>
 #include <Messages/NotifyFactionsChanges.h>
-#include <Messages/ServerTimeSettings.h>
-#include <Messages/NotifyRemoveCharacter.h>
-#include <Messages/NotifyQuestUpdate.h>
-#include <Messages/NotifyPlayerList.h>
+#include <Messages/NotifyInventoryChanges.h>
 #include <Messages/NotifyPartyInfo.h>
 #include <Messages/NotifyPartyInvite.h>
-#include <Messages/NotifyCharacterTravel.h>
+#include <Messages/NotifyPlayerList.h>
+#include <Messages/NotifyQuestUpdate.h>
+#include <Messages/NotifyRemoveCharacter.h>
+#include <Messages/ServerMessageFactory.h>
+#include <Messages/ServerReferencesMoveRequest.h>
+#include <Messages/ServerTimeSettings.h>
 
-#define TRANSPORT_DISPATCH(packetName) \
-case k##packetName: \
-    { \
-    const auto pRealMessage = TiltedPhoques::CastUnique<packetName>(std::move(pMessage)); \
-    m_dispatcher.trigger(*pRealMessage); \
-    } \
-    break; 
+#define TRANSPORT_DISPATCH(packetName)                                                                                 \
+    case k##packetName: {                                                                                              \
+        const auto pRealMessage = TiltedPhoques::CastUnique<packetName>(std::move(pMessage));                          \
+        m_dispatcher.trigger(*pRealMessage);                                                                           \
+    }                                                                                                                  \
+    break;
 
 using TiltedPhoques::Packet;
 
 TransportService::TransportService(World& aWorld, entt::dispatcher& aDispatcher, ImguiService& aImguiService) noexcept
-    : m_world(aWorld)
-    , m_dispatcher(aDispatcher)
+    : m_world(aWorld), m_dispatcher(aDispatcher)
 {
     m_updateConnection = m_dispatcher.sink<UpdateEvent>().connect<&TransportService::HandleUpdate>(this);
     m_cellChangeConnection = m_dispatcher.sink<CellChangeEvent>().connect<&TransportService::OnCellChangeEvent>(this);
@@ -65,12 +64,15 @@ bool TransportService::Send(const ClientMessage& acMessage) const noexcept
 
     struct ScopedReset
     {
-        ~ScopedReset() { s_allocator.Reset(); }
+        ~ScopedReset()
+        {
+            s_allocator.Reset();
+        }
     } allocatorGuard;
 
     if (IsConnected())
     {
-        ScopedAllocator _{ s_allocator };
+        ScopedAllocator _{s_allocator};
 
         Buffer buffer(1 << 16);
         Buffer::Writer writer(&buffer);
@@ -102,25 +104,25 @@ void TransportService::OnConsume(const void* apData, uint32_t aSize)
 
     switch (pMessage->GetOpcode())
     {
-    case kAuthenticationResponse:
-    {
+    case kAuthenticationResponse: {
         const auto pRealMessage = TiltedPhoques::CastUnique<AuthenticationResponse>(std::move(pMessage));
         HandleAuthenticationResponse(*pRealMessage);
     }
     break;
 
-    TRANSPORT_DISPATCH(AssignCharacterResponse);
-    TRANSPORT_DISPATCH(ServerReferencesMoveRequest);
-    TRANSPORT_DISPATCH(ServerTimeSettings);
-    TRANSPORT_DISPATCH(CharacterSpawnRequest);
-    TRANSPORT_DISPATCH(NotifyInventoryChanges);
-    TRANSPORT_DISPATCH(NotifyFactionsChanges);
-    TRANSPORT_DISPATCH(NotifyRemoveCharacter);
-    TRANSPORT_DISPATCH(NotifyQuestUpdate);
-    TRANSPORT_DISPATCH(NotifyPlayerList);
-    TRANSPORT_DISPATCH(NotifyPartyInfo);
-    TRANSPORT_DISPATCH(NotifyPartyInvite);
-    TRANSPORT_DISPATCH(NotifyCharacterTravel);
+        TRANSPORT_DISPATCH(AssignCharacterResponse);
+        TRANSPORT_DISPATCH(ServerReferencesMoveRequest);
+        TRANSPORT_DISPATCH(ServerTimeSettings);
+        TRANSPORT_DISPATCH(CharacterSpawnRequest);
+        TRANSPORT_DISPATCH(NotifyInventoryChanges);
+        TRANSPORT_DISPATCH(NotifyFactionsChanges);
+        TRANSPORT_DISPATCH(NotifyRemoveCharacter);
+        TRANSPORT_DISPATCH(NotifyQuestUpdate);
+        TRANSPORT_DISPATCH(NotifyPlayerList);
+        TRANSPORT_DISPATCH(NotifyPartyInfo);
+        TRANSPORT_DISPATCH(NotifyPartyInvite);
+        TRANSPORT_DISPATCH(NotifyCharacterTravel);
+        TRANSPORT_DISPATCH(NotifyContainerChange);
 
     default:
         spdlog::error("Client message opcode {} from server has no handler", pMessage->GetOpcode());
@@ -184,7 +186,7 @@ void TransportService::OnCellChangeEvent(const CellChangeEvent& acEvent) const n
     uint32_t baseId = 0;
     uint32_t modId = 0;
 
-    if(m_world.GetModSystem().GetServerModId(acEvent.CellId, modId, baseId))
+    if (m_world.GetModSystem().GetServerModId(acEvent.CellId, modId, baseId))
     {
         EnterCellRequest message;
         message.CellId = GameId(modId, baseId);
@@ -202,8 +204,10 @@ void TransportService::OnDraw() noexcept
         status.m_flOutBytesPerSec /= 1024.f;
         status.m_flInBytesPerSec /= 1024.f;
 
-        ImGui::InputFloat("Net Out kBps", (float*)&status.m_flOutBytesPerSec, 0.f, 0.f, "%.3f", ImGuiInputTextFlags_ReadOnly);
-        ImGui::InputFloat("Net In kBps", (float*)&status.m_flInBytesPerSec, 0.f, 0.f, "%.3f", ImGuiInputTextFlags_ReadOnly);
+        ImGui::InputFloat("Net Out kBps", (float*)&status.m_flOutBytesPerSec, 0.f, 0.f, "%.3f",
+                          ImGuiInputTextFlags_ReadOnly);
+        ImGui::InputFloat("Net In kBps", (float*)&status.m_flInBytesPerSec, 0.f, 0.f, "%.3f",
+                          ImGuiInputTextFlags_ReadOnly);
 
         auto stats = GetStatistics();
         float protocolSent = float(stats.SentBytes) / 1024.f;
@@ -212,17 +216,18 @@ void TransportService::OnDraw() noexcept
         float uncompressedReceived = float(stats.UncompressedRecvBytes) / 1024.f;
 
         ImGui::InputFloat("Protocol Out kBps", (float*)&protocolSent, 0.f, 0.f, "%.3f", ImGuiInputTextFlags_ReadOnly);
-        ImGui::InputFloat("Protocol In kBps", (float*)&protocolReceived, 0.f, 0.f, "%.3f", ImGuiInputTextFlags_ReadOnly);
+        ImGui::InputFloat("Protocol In kBps", (float*)&protocolReceived, 0.f, 0.f, "%.3f",
+                          ImGuiInputTextFlags_ReadOnly);
 
         ImGui::InputFloat("User Out kBps", (float*)&uncompressedSent, 0.f, 0.f, "%.3f", ImGuiInputTextFlags_ReadOnly);
-        ImGui::InputFloat("User In kBps", (float*)&uncompressedReceived, 0.f, 0.f, "%.3f", ImGuiInputTextFlags_ReadOnly);
+        ImGui::InputFloat("User In kBps", (float*)&uncompressedReceived, 0.f, 0.f, "%.3f",
+                          ImGuiInputTextFlags_ReadOnly);
         ImGui::End();
     }
 
     // online indicator
-    ImGui::GetBackgroundDrawList()->AddRectFilled(
-        ImVec2(23.f, 23.f), 
-        ImVec2(50.f, 50.f), m_connected ? ImColor(0, 230, 64) : ImColor(240, 52, 52));
+    ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(23.f, 23.f), ImVec2(50.f, 50.f),
+                                                  m_connected ? ImColor(0, 230, 64) : ImColor(240, 52, 52));
 }
 
 void TransportService::HandleAuthenticationResponse(const AuthenticationResponse& acMessage) noexcept

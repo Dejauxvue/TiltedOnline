@@ -6,7 +6,7 @@ using TiltedPhoques::Serialization;
 bool Inventory::operator==(const Inventory& acRhs) const noexcept
 {
     return RightHandWeapon == acRhs.RightHandWeapon
-        && Buffer == acRhs.Buffer
+        //&& Buffer == acRhs.Buffer
 #if TP_SKYRIM
         && LeftHandWeapon == acRhs.LeftHandWeapon
         && RightHandSpell == acRhs.RightHandSpell
@@ -31,7 +31,7 @@ void Inventory::Serialize(TiltedPhoques::Buffer::Writer& aWriter) const noexcept
     bool isShoutSet = Shout != GameId{};
 #endif
 
-    Serialization::WriteString(aWriter, Buffer);
+    //Serialization::WriteString(aWriter, Buffer);
 
     Serialization::WriteBool(aWriter, isRightWeaponSet);
 #if TP_SKYRIM
@@ -61,7 +61,7 @@ void Inventory::Serialize(TiltedPhoques::Buffer::Writer& aWriter) const noexcept
 
 void Inventory::Deserialize(TiltedPhoques::Buffer::Reader& aReader) noexcept
 {
-    Buffer = Serialization::ReadString(aReader);
+    //Buffer = Serialization::ReadString(aReader);
 
     bool isRightWeaponSet = Serialization::ReadBool(aReader);
 #if TP_SKYRIM

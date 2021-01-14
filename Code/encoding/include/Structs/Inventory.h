@@ -18,7 +18,7 @@ struct Inventory
     void Serialize(TiltedPhoques::Buffer::Writer& aWriter) const noexcept;
     void Deserialize(TiltedPhoques::Buffer::Reader& aReader) noexcept;
 
-    String Buffer{};
+    //String Buffer{};
     GameId RightHandWeapon{};
 
 #if TP_SKYRIM

@@ -147,8 +147,8 @@ Inventory Actor::GetInventory() const noexcept
 {
     auto& modSystem = World::Get().GetModSystem();
 
-    Inventory inventory;
-    inventory.Buffer = SerializeInventory();
+   Inventory inventory;
+  /*  inventory.Buffer = SerializeInventory();*/
 
     auto pMainHandWeapon = GetEquippedWeapon(0);
     uint32_t mainId = pMainHandWeapon ? pMainHandWeapon->formID : 0;
@@ -215,8 +215,9 @@ void Actor::SetInventory(const Inventory& acInventory) noexcept
 
     auto* pEquipManager = EquipManager::Get();
 
-    if (!acInventory.Buffer.empty())
-        DeserializeInventory(acInventory.Buffer);
+    //Inventory content is managed by container synchronization
+    /*if (!acInventory.Buffer.empty())
+        DeserializeInventory(acInventory.Buffer);*/
 
     auto& modSystem = World::Get().GetModSystem();
 

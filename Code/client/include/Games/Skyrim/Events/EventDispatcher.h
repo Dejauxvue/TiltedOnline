@@ -78,6 +78,10 @@ struct TESCombatEvent
 
 struct TESContainerChangedEvent
 {
+    uint32_t sourceContainer;
+    uint32_t targetContainer;
+    uint32_t itemID;
+    uint32_t itemCount;
 
 };
 
