@@ -12,7 +12,7 @@ public:
 
   
 private:
-    void HandleContainerChange(const PacketEvent<RequestContainerChange>& aChanges) noexcept;
+    void HandleContainerChange(const PacketEvent<RequestContainerChange>& aChanges) const noexcept;
 
     entt::scoped_connection m_ContainerChangeConnection;
 

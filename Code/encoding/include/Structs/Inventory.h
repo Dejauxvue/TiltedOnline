@@ -18,6 +18,7 @@ struct Inventory
     void Serialize(TiltedPhoques::Buffer::Writer& aWriter) const noexcept;
     void Deserialize(TiltedPhoques::Buffer::Reader& aReader) noexcept;
 
+    //TODO: we need this again for character spawning
     //String Buffer{};
     GameId RightHandWeapon{};
 

@@ -1,5 +1,6 @@
 #pragma once
 
+struct TESObjectREFR;
 template <class T> struct BSTEventSink;
 
 // Very nasty work around to avoid template code duplication
@@ -78,8 +79,8 @@ struct TESCombatEvent
 
 struct TESContainerChangedEvent
 {
-    uint32_t sourceContainer;
-    uint32_t targetContainer;
+    uint32_t sourceFormId;
+    uint32_t targetFormId;
     uint32_t itemID;
     uint32_t itemCount;
 

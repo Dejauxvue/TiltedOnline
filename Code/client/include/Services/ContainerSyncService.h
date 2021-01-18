@@ -4,6 +4,8 @@
 #include <Games/Events.h>
 #include <World.h>
 
+struct NotifyContainerChange;
+
 class ContainerSyncService final : public BSTEventSink<TESContainerChangedEvent>
 {
   public:
@@ -11,6 +13,7 @@ class ContainerSyncService final : public BSTEventSink<TESContainerChangedEvent>
     ~ContainerSyncService() override = default;
 
   private:
+    void OnContainerSync(const NotifyContainerChange&);
     BSTEventResult OnEvent(const TESContainerChangedEvent*, const EventDispatcher<TESContainerChangedEvent>*) override;
 
     entt::scoped_connection m_containerSyncConnection;

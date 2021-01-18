@@ -4,6 +4,7 @@
 
 #include <Buffer.hpp>
 
+struct TESObjectREFR;
 using TiltedPhoques::Map;
 
 struct RequestContainerChange final : ClientMessage

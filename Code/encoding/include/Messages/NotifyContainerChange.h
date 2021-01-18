@@ -8,7 +8,7 @@ using TiltedPhoques::Map;
 
 struct NotifyContainerChange final : ServerMessage
 {
-    NotifyContainerChange() : ServerMessage(kNotifyInventoryChanges)
+    NotifyContainerChange() : ServerMessage(kNotifyContainerChange)
     {
     }
 

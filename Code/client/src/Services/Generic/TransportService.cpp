@@ -43,6 +43,7 @@
     case k##packetName: {                                                                                              \
         const auto pRealMessage = TiltedPhoques::CastUnique<packetName>(std::move(pMessage));                          \
         m_dispatcher.trigger(*pRealMessage);                                                                           \
+        spdlog::info("transport serivce received {:x}", #packetName);                                                  \
     }                                                                                                                  \
     break;
 
@@ -94,14 +95,13 @@ void TransportService::OnConsume(const void* apData, uint32_t aSize)
     ServerMessageFactory factory;
     TiltedPhoques::ViewBuffer buf((uint8_t*)apData, aSize);
     Buffer::Reader reader(&buf);
-
+    
     auto pMessage = factory.Extract(reader);
     if (!pMessage)
     {
         spdlog::error("Couldn't parse packet from server");
         return;
     }
-
     switch (pMessage->GetOpcode())
     {
     case kAuthenticationResponse: {
